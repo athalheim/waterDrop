@@ -4,3 +4,4 @@ Drag top drop to empty tube or tube containing a same-color drop.
 Movine back is enabled from one to five steps.
 Restart current game indefinitely; after 5 tries, an additional empty tube is added.
 
+Game uses pure HTML5 and plain javascript. No frills!
