@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>WaterDrop</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link        rel="stylesheet"      href="index.css">
+    <script     type="text/javascript"  src="js/wd.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Water Drop</h1>
+    </header>
+    <main>
+      <input 
+        type       = "button"
+        id         = "backButton"
+        value      = "Back"
+        onclick    = "wd.moveBackOne()"
+        style      = "display:none; position:absolute; margin:5px; right:50; font-size:20px; z-index:4;"
+      >
+      <input 
+        type       = "button"
+        value      = "Restart"
+        onclick    = "wd.restart()"
+        style      = "position:absolute; margin:5px; right:0; font-size:20px; z-index:4;"
+      >
+      <canvas
+        style      = "display:none; position:absolute; left:0; top:0; z-index: 2;"
+        id         = "hiddenTubeCanvas"
+        width      = "64"
+        height     = "64"
+        ondragover = "wd.dragover(event)"
+        ondrop     = "wd.drop(event)"
+      ></canvas>
+      <canvas
+        style      = "display:none; position:absolute; left:0; top:0; z-index: 3;"
+        id         = "hiddenColorCanvas"
+        width      = "64"
+        height     = "64"
+        draggable  = "true"
+        ondrag     = "wd.dragstart(event)"
+      ></canvas>
+      <img
+        style      = "display:none; position:fixed; top:calc(50% - 130px); left:calc(50% - 195px); z-index: 5;"
+        id         = "hiddenVictoryCanvas"
+        width      = "390"
+        height     = "260"
+        src        = "images/victory.jpg"
+        onclick    = "wd.victory()"
+      ></img>
+    </main>
+    <footer>
+      <h2 id="footerH2">(Footer)</h2>
+    </footer>
+
+  </body>
+</html>
+
+<!-- -\\- -->

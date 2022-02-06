@@ -1,0 +1,43 @@
+* {
+    border-radius:     5px;
+    box-sizing:        border-box;
+    margin:            0px;
+    padding:           0px;
+    overflow:          hidden;
+    user-select:       none;
+}
+html, body {
+    background-color: grey;
+    height:            100%;
+    min-height:        100%;
+    width:             100%; 
+}
+body {
+    display:           flex;
+    flex-direction:    column;
+}
+
+    /* Page divisions: header, main, footer */
+header, footer, main {
+    flex:              none;
+    margin:            5px;
+    margin-bottom:     0px;
+}
+main {
+    background-image:    url("images/waterDrops.jpg");
+    background-position: center;
+    background-repeat:   no-repeat;
+    background-size:     cover;
+    flex:                auto;
+}
+
+    /* header content */
+h1, h2 {
+    background-color:beige; 
+    display:           inline-block;
+    min-width:         100%;
+    text-align:        center;
+    width:             100%;
+}
+
+/* -\\- */
