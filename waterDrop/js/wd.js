@@ -2,48 +2,61 @@ var wd = {
         /* Variables */
     colorNames: [
             /* Basic colors */
-        'red',        'orange',        'yellow',        'seagreen',        'blue',        'gray',
+        'red', 'orange', 'yellow', 'seagreen', 'blue', 'gray', 'pink',
             /* Extended colors */
-        'pink',       'springgreen',   'lightblue',     'darkviolet',      'darkgreen',   'lightgray',
+        'springgreen', 'lightblue', 'darkviolet', 'darkgreen', 'lightgray',
     ],
     tubes:                             [],
     tubesRef:                          [],
-    colorCount:                        5,
-    tryCount:                          0,
-    pickedColor:                       null,
     sourceTube:                        null,
+    colorCount:                        6,
+    pickedColor:                       null,
+    tryCount:                          0,
     storedMoves:                       null,
     victoryInterval:                   null,
     victoryIncrement:                  0,
 
         /* Procedures */
     initialize: function() {
-        wd.reset();
+        wd.storedMoves                 = [];
         wd.tryCount                    = 1;
-            /* Cycle color count from 6 to 12 */
-        wd.colorCount                  = (wd.colorCount === 12)? 5: wd.colorCount + 1;
-            /* Build tubes array */
-        var sortedColorTubes           = [];
-        for (var colorIndex = 0; colorIndex < wd.colorCount; colorIndex += 1) {
-            var color                  = wd.colorNames[colorIndex];
-            sortedColorTubes.push([color + "_0", color+ "_1", color + "_2", color + "_3"]);
-        }
-            /* Build and fill game tubes */
-        wd.tubes                       = [];
-        var array                      = new Uint8Array(wd.colorCount * 4);
-        self.crypto.getRandomValues(array);
-        for (var tubeIndex = 0; tubeIndex < wd.colorCount; tubeIndex += 1) {
-            var tube                   = [];
-            for (var i = 0; i < 4; i += 1) {
-                var sortedTubeIndex    = Math.floor((array[(tubeIndex * 4) + i] / 256) * sortedColorTubes.length);
-                var sortedColorTube    = sortedColorTubes[sortedTubeIndex];
-                tube.push(sortedColorTube.pop());
-                if (sortedColorTube.length === 0) {
-                    /* Remove empty tube from list */
-                    sortedColorTubes.splice(sortedTubeIndex, 1);
-                } 
+            /* Cycle color count from 7 to 12 */
+        wd.colorCount                  = (wd.colorCount === 12)? 6: wd.colorCount + 1;
+            /* This check ensures no tube contains more then two same consecutive colors */
+        var isCorrectlyMixed           = false;
+        while (!isCorrectlyMixed) {
+                /* Build tubes array */
+            var sortedColorTubes       = [];
+            for (var colorIndex = 0; colorIndex < wd.colorCount; colorIndex += 1) {
+                var color              = wd.colorNames[colorIndex];
+                sortedColorTubes.push([color, color, color, color]);
             }
-            wd.tubes.push(tube);
+                /* Build and fill game tubes */
+            wd.tubes                   = [];
+            var array                  = new Uint8Array(wd.colorCount * 4);
+            self.crypto.getRandomValues(array);
+            for (var tubeIndex = 0; tubeIndex < wd.colorCount; tubeIndex += 1) {
+                var tube               = [];
+                for (var i = 0; i < 4; i += 1) {
+                    var sortedTubeIndex = Math.floor((array[(tubeIndex * 4) + i] / 256) * sortedColorTubes.length);
+                    var sortedColorTube = sortedColorTubes[sortedTubeIndex];
+                    tube.push(sortedColorTube.pop());
+                    if (sortedColorTube.length === 0) {
+                        /* Remove empty tube from list */
+                        sortedColorTubes.splice(sortedTubeIndex, 1);
+                    } 
+                }
+                wd.tubes.push(tube);
+            }
+                /* Check consecutive colors: loop again when more than two */
+            isCorrectlyMixed           = true;
+            for (var tubeIndex = 0; tubeIndex < wd.colorCount; tubeIndex += 1) {
+                var tube = wd.tubes[tubeIndex];
+                if (((tube[0] === tube[1]) && (tube[0] === tube[2])) || ((tube[1] === tube[2]) && (tube[1] === tube[3]))) {
+                    isCorrectlyMixed   = false;
+                    break;
+                }
+            }            
         }
             /* Add two empty tubes */
         wd.tubes.push([]);
@@ -60,13 +73,8 @@ var wd = {
             /* Add a third empty tube after 5 tries */
         if (wd.tryCount === 6) wd.tubesRef.push([]);        
         wd.tubes                       = JSON.parse(JSON.stringify(wd.tubesRef));
-        wd.reset();
-        wd.paintTubes();
-    },
-    reset: function() {
-        wd.pickedColor                 = null;
-        wd.sourceTubeIndex             = null;
         wd.storedMoves                 = [];
+        wd.paintTubes();
     },
     removeCanvas: function(canvasIdPrefix) {
         var canvasTags                 = document.querySelectorAll('[id^="' + canvasIdPrefix + '"]');
@@ -120,10 +128,9 @@ var wd = {
             var dropTop                = top + (dropSize * 4.5);
             for (var colorIndex = 0; colorIndex < tube.length; colorIndex += 1) {
                 dropTop               -= (dropSize + tubeVerticalSpace);
-                var currentColorId     = tube[colorIndex];
-                var currentColor       = currentColorId.split("_")[0];
+                var currentColor     = tube[colorIndex];
                 var colorCanvas        = document.getElementById("hiddenColorCanvas").cloneNode(true);
-                colorCanvas.id         = currentColorId;
+                colorCanvas.id         = currentColor + "_" + tubeIndex; 
                 colorCanvas.style.display    = "block";
                 colorCanvas.style.left       = left + "px";
                 colorCanvas.style.top        = dropTop  + "px";
@@ -136,21 +143,18 @@ var wd = {
         }
     },
 
+        /* Click events */
+    colorClick: function(event) {
+        wd.selectColorAndTube(event.target.id);
+    },
+    tubeClick: function(event) {
+        wd.validateColorMove(event.target.id.split("_")[1]);
+    },
+    
         /* Drag starts by picking a top color */
     dragstart: function(event) {
         event.preventDefault();
-        wd.sourceTube                  = null;
-        wd.pickedColor                 = null;
-        for (var tubeIndex = 0; tubeIndex < wd.tubes.length; tubeIndex += 1) {
-            var tube                   = wd.tubes[tubeIndex];
-            if (tube.length > 0) {
-                if (tube[tube.length - 1] === event.target.id) {
-                    wd.sourceTube      = tube;
-                    wd.pickedColor     = event.target.id.split("_")[0];
-                    return;
-                }
-            }
-        }
+        wd.selectColorAndTube(event.target.id);
     },
         /* Drag over tube  */
     dragover: function(event) {
@@ -159,27 +163,39 @@ var wd = {
         /* Drop to tube */
     drop: function(event) {
         event.preventDefault();
-        var targetTubeIndex            = event.target.id.split("_")[1];
-        var targetTube                 = wd.tubes[targetTubeIndex];
-            /* No move when source and target tubes are the same */
-        if (targetTube === wd.sourceTube) return;
-            /* No move when target tube is full */
-        if (targetTube.length === 4) return;
-            /* Move when target tube is empty */
-        if (targetTube.length === 0) { wd.moveColor(targetTube); return; }
-            /* Move when target tube top color is same as picked color */
-        if ((targetTube[targetTube.length - 1].split("_")[0] === wd.pickedColor)) wd.moveColor(targetTube);
-            /* Else, no move */
+        wd.validateColorMove(event.target.id.split("_")[1]);
     },
 
+        /* Common procedures */
+    selectColorAndTube: function(colorId) {
+        wd.pickedColor                 = colorId.split("_")[0];
+        var tubeIndex                  = parseInt(colorId.split("_")[1]);
+        wd.sourceTube                  = wd.tubes[tubeIndex];
+    },
+    validateColorMove: function(tubeIndex) {
+        var targetTube                 = wd.tubes[tubeIndex];
+            /* No move when source and target tubes are the same */
+        if (targetTube === wd.sourceTube) { wd.resetMove(); return; }
+            /* No move when target tube is full */
+        if (targetTube.length === 4)      { wd.resetMove(); return; }
+            /* Move when target tube is empty */
+        if (targetTube.length === 0)      { wd.moveColor(targetTube); return; }
+            /* Move when target tube top color is same as picked color */
+        if ((targetTube[targetTube.length - 1] === wd.pickedColor)) wd.moveColor(targetTube);
+            /* Else, no move */
+    },
+    resetMove: function() {
+        wd.sourceTube                  = null;
+        wd.pickedColor                 = null;
+    },
     moveColor: function(targetTube) {
-        var colorCount                 = 1;
-        targetTube.push(wd.sourceTube.pop());
-        while ((wd.sourceTube.length > 0) && (wd.sourceTube[wd.sourceTube.length - 1].startsWith(wd.pickedColor)) && (targetTube.length < 4)) {
+        var colorCount                 = 0;
+        while ((wd.sourceTube.length > 0) && (wd.sourceTube[wd.sourceTube.length - 1] === wd.pickedColor) && (targetTube.length < 4)) {
             colorCount                += 1;
             targetTube.push(wd.sourceTube.pop());
         }
         wd.addMove(targetTube, wd.sourceTube, colorCount);
+        wd.resetMove();
         wd.paintTubes();
         wd.evaluateScore();
     },
@@ -216,9 +232,9 @@ var wd = {
             if (tube.length === 0) {
                 /* Nothing to do here! */
             } else if (tube.length === 4) {
-                var firstColor         = tube[0].split("_")[0];
+                var firstColor         = tube[0];
                 for (var colorIndex = 1; colorIndex < tube.length; colorIndex += 1) {
-                    if (!tube[colorIndex].startsWith(firstColor)) {
+                    if (!tube[colorIndex] === firstColor) {
                         return;
                     }
                 }                
