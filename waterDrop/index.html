@@ -31,6 +31,7 @@
         height     = "64"
         ondragover = "wd.dragover(event)"
         ondrop     = "wd.drop(event)"
+        onclick    = "wd.tubeClick(event)"
       ></canvas>
       <canvas
         style      = "display:none; position:absolute; left:0; top:0; z-index: 3;"
@@ -39,6 +40,7 @@
         height     = "64"
         draggable  = "true"
         ondrag     = "wd.dragstart(event)"
+        onclick    = "wd.colorClick(event)"
       ></canvas>
       <img
         style      = "display:none; position:fixed; top:calc(50% - 130px); left:calc(50% - 195px); z-index: 5;"
